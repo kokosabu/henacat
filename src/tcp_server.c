@@ -26,6 +26,47 @@ char *table[9][2] = {
     {"ico",  "image/ico"}
 };
 
+void response_header_200(FILE *socket_fp, int index)
+{
+    time_t timep;
+    struct tm   *time_inf;
+    char d[1024];
+
+    timep = time(NULL);
+    time_inf = gmtime(&timep);
+
+    fprintf(socket_fp, "HTTP/1.1 200 OK\n");
+    //fprintf(socket_fp, "Date: %s\n", asctime(time_inf));
+    fprintf(stderr, "Date: %s\n", asctime(time_inf));
+    strftime(d, 1024, "%Y年%m月%d日 %H時%M分%S秒", time_inf);
+    fprintf(socket_fp, "Date: %s\n", d);
+    fprintf(socket_fp, "Server: Modoki/0.1\n");
+    fprintf(socket_fp, "Connection: close\n");
+    fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
+    fprintf(stderr, "Content-type: %s\n", table[index][1]);
+    fprintf(socket_fp, "\n");
+}
+
+void response_header_404(FILE *socket_fp, int index)
+{
+    time_t timep;
+    struct tm   *time_inf;
+    char d[1024];
+
+    timep = time(NULL);
+    time_inf = gmtime(&timep);
+
+    fprintf(socket_fp, "HTTP/1.1 404 OK\n");
+    //fprintf(socket_fp, "Date: %s\n", asctime(time_inf));
+    fprintf(stderr, "Date: %s\n", asctime(time_inf));
+    strftime(d, 1024, "%Y年%m月%d日 %H時%M分%S秒", time_inf);
+    fprintf(socket_fp, "Date: %s\n", d);
+    fprintf(socket_fp, "Server: Modoki/0.1\n");
+    fprintf(socket_fp, "Connection: close\n");
+    fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
+    fprintf(stderr, "Content-type: %s\n", table[index][1]);
+    fprintf(socket_fp, "\n");
+}
 //void thread(FILE *socket_fp, int fd)
 void thread(void *p)
 {
@@ -33,12 +74,10 @@ void thread(void *p)
     int fd;
     char d[1024];
     FILE *file_in_fp;
-    time_t timep;
     char line[1024];
     char file_name[1024];
     char file_name2[1024];
     char *ext;
-    struct tm   *time_inf;
     int index;
 
     thread_arg *t = (thread_arg *)p;
@@ -71,22 +110,21 @@ void thread(void *p)
     socket_fp = fdopen(fd, "w");
     file_in_fp = fopen(file_name, "r");
 
-    timep = time(NULL);
-    time_inf = gmtime(&timep);
-
-    fprintf(socket_fp, "HTTP/1.1 200 OK\n");
-    fprintf(socket_fp, "Server: Modoki/0.1\n");
-    fprintf(socket_fp, "Connection: close\n");
-    //fprintf(socket_fp, "Content-type: text/html\n");
-    fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
-    fprintf(stderr, "Content-type: %s\n", table[index][1]);
-    fprintf(socket_fp, "\n");
-
-    while(fgets(line, 1024, file_in_fp) != NULL) {
-        fprintf(socket_fp, "%s", line);
+    if(file_in_fp == NULL) {
+        response_header_404(socket_fp, index);
+        file_in_fp = fopen("./404.html", "r");
+        while(fgets(line, 1024, file_in_fp) != NULL) {
+            fprintf(socket_fp, "%s", line);
+        }
+        fclose(file_in_fp);
+    } else {
+        response_header_200(socket_fp, index);
+        while(fgets(line, 1024, file_in_fp) != NULL) {
+            fprintf(socket_fp, "%s", line);
+        }
+        fclose(file_in_fp);
     }
 
-    fclose(file_in_fp);
     fclose(socket_fp);
 }
 
@@ -107,9 +145,9 @@ int main(int argc, char **argv)
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     ch = bind(sock, (struct sockaddr*)&addr, sizeof(addr));
+    ch = listen(sock, 6);
 
     while(1) {
-        ch = listen(sock, 6);
         fd = accept(sock, NULL, NULL);
 
         socket_fp = fdopen(fd, "r+");
