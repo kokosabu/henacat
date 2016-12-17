@@ -8,13 +8,16 @@
 #include <time.h>
 
 #include <pthread.h>
+#include <unistd.h>
+#include <limits.h>
+#include <stdlib.h>
 
 typedef struct {
     FILE *socket_fp;
     int fd;
 } thread_arg;
 
-char *table[9][2] = {
+char *table[10][2] = {
     {"html", "text/html"},
     {"htm",  "text/html"},
     {"txt",  "text/plain"},
@@ -23,8 +26,25 @@ char *table[9][2] = {
     {"jpg",  "image/jpeg"},
     {"jpeg", "image/jpeg"},
     {"gif",  "image/gif"},
-    {"ico",  "image/ico"}
+    {"ico",  "image/ico"},
+    {NULL,   "text/plain"}
 };
+
+/*
+void to_real_path(char *from, char *to)
+{
+    int index;
+
+    index = 0;
+    while(*from != '\0') {
+        if(*from
+        to[index] = *from;
+        index++;
+        from++;
+    }
+    to[index] = '\0';
+}
+*/
 
 void response_header_200(FILE *socket_fp, int index)
 {
@@ -77,6 +97,8 @@ void thread(void *p)
     char line[1024];
     char file_name[1024];
     char file_name2[1024];
+    char real[1024];
+    char pathname[1024];
     char *ext;
     int index;
 
@@ -100,6 +122,10 @@ void thread(void *p)
             fprintf(stderr, "[%s]\n", ext);
 
             for(index = 0; index < 9; index++) {
+                if(ext == NULL) {
+                    index = 9;
+                    break;
+                }
                 if(strcmp(ext, table[index][0]) == 0) {
                     break;
                 }
@@ -107,15 +133,36 @@ void thread(void *p)
         }
     }
 
+    getcwd(pathname, 1024);
+    fprintf(stderr, "%s\n", pathname);
+
+    fprintf(stderr, "<<%c>>\n", file_name[strlen(file_name)-1]);
+    if(file_name[strlen(file_name)-1] == '/') {
+        index = 0;
+        strcat(file_name, "index.html");
+    }
+    realpath(file_name, real);
+    fprintf(stderr, "%s\n", real);
+
     socket_fp = fdopen(fd, "w");
     file_in_fp = fopen(file_name, "r");
 
     if(file_in_fp == NULL) {
+        index = 0;
         response_header_404(socket_fp, index);
         file_in_fp = fopen("./404.html", "r");
         while(fgets(line, 1024, file_in_fp) != NULL) {
             fprintf(socket_fp, "%s", line);
         }
+        fclose(file_in_fp);
+    } if(strncmp(real, pathname, strlen(pathname)) != 0) {
+        index = 0;
+        response_header_404(socket_fp, index);
+        file_in_fp = fopen("./404.html", "r");
+        while(fgets(line, 1024, file_in_fp) != NULL) {
+            fprintf(socket_fp, "%s", line);
+        }
+        fprintf(socket_fp, "drectory\n");
         fclose(file_in_fp);
     } else {
         response_header_200(socket_fp, index);
