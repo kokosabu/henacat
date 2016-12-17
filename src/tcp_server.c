@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 typedef struct {
     FILE *socket_fp;
@@ -30,22 +31,6 @@ char *table[10][2] = {
     {NULL,   "text/plain"}
 };
 
-/*
-void to_real_path(char *from, char *to)
-{
-    int index;
-
-    index = 0;
-    while(*from != '\0') {
-        if(*from
-        to[index] = *from;
-        index++;
-        from++;
-    }
-    to[index] = '\0';
-}
-*/
-
 void response_header_200(FILE *socket_fp, int index)
 {
     time_t timep;
@@ -61,6 +46,28 @@ void response_header_200(FILE *socket_fp, int index)
     strftime(d, 1024, "%Y年%m月%d日 %H時%M分%S秒", time_inf);
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
+    fprintf(socket_fp, "Connection: close\n");
+    fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
+    fprintf(stderr, "Content-type: %s\n", table[index][1]);
+    fprintf(socket_fp, "\n");
+}
+
+void response_header_301(FILE *socket_fp, int index, char *path)
+{
+    time_t timep;
+    struct tm   *time_inf;
+    char d[1024];
+
+    timep = time(NULL);
+    time_inf = gmtime(&timep);
+
+    fprintf(socket_fp, "HTTP/1.1 301 Moved Permanently\n");
+    //fprintf(socket_fp, "Date: %s\n", asctime(time_inf));
+    fprintf(stderr, "Date: %s\n", asctime(time_inf));
+    strftime(d, 1024, "%Y年%m月%d日 %H時%M分%S秒", time_inf);
+    fprintf(socket_fp, "Date: %s\n", d);
+    fprintf(socket_fp, "Server: Modoki/0.1\n");
+    fprintf(socket_fp, "Location: %s\n", path);
     fprintf(socket_fp, "Connection: close\n");
     fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
     fprintf(stderr, "Content-type: %s\n", table[index][1]);
@@ -99,8 +106,11 @@ void thread(void *p)
     char file_name2[1024];
     char real[1024];
     char pathname[1024];
+    char location[1024];
     char *ext;
     int index;
+    struct stat st;
+    int result;
 
     thread_arg *t = (thread_arg *)p;
     socket_fp = t->socket_fp;
@@ -134,20 +144,33 @@ void thread(void *p)
     }
 
     getcwd(pathname, 1024);
-    fprintf(stderr, "%s\n", pathname);
+    fprintf(stderr, "path: %s\n", pathname);
 
-    fprintf(stderr, "<<%c>>\n", file_name[strlen(file_name)-1]);
+    realpath(file_name, real);
+    fprintf(stderr, "real: %s\n", real);
+
     if(file_name[strlen(file_name)-1] == '/') {
         index = 0;
         strcat(file_name, "index.html");
+    } else {
+        result = stat(real, &st);
+        if ((st.st_mode & S_IFMT) == S_IFDIR) {
+            fprintf(stderr, "---- 1 [301] ----\n");
+            index = 0;
+            strcpy(location, "http://localhost:8001/");
+            strcat(location, file_name);
+            strcat(location, "/");
+            fprintf(stderr, "trav file_name : %s\n", location);
+            response_header_301(socket_fp, index, location);
+            return;
+        }
     }
-    realpath(file_name, real);
-    fprintf(stderr, "%s\n", real);
 
     socket_fp = fdopen(fd, "w");
-    file_in_fp = fopen(file_name, "r");
 
     if(file_in_fp == NULL) {
+        fprintf(stderr, "---- 2 [404 file notfound] ----\n");
+        fprintf(stderr, "file_name : %s\n", file_name);
         index = 0;
         response_header_404(socket_fp, index);
         file_in_fp = fopen("./404.html", "r");
@@ -156,6 +179,8 @@ void thread(void *p)
         }
         fclose(file_in_fp);
     } if(strncmp(real, pathname, strlen(pathname)) != 0) {
+        fprintf(stderr, "---- 3 [404 traversal] ----\n");
+        fprintf(stderr, "file_name : %s\n", file_name);
         index = 0;
         response_header_404(socket_fp, index);
         file_in_fp = fopen("./404.html", "r");
@@ -165,7 +190,10 @@ void thread(void *p)
         fprintf(socket_fp, "drectory\n");
         fclose(file_in_fp);
     } else {
+        fprintf(stderr, "---- 4 [200 file found] ----\n");
+        fprintf(stderr, "file_name : %s\n", file_name);
         response_header_200(socket_fp, index);
+        file_in_fp = fopen(file_name, "r");
         while(fgets(line, 1024, file_in_fp) != NULL) {
             fprintf(socket_fp, "%s", line);
         }
