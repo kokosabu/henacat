@@ -41,9 +41,8 @@ void response_header_200(FILE *socket_fp, int index)
     time_inf = gmtime(&timep);
 
     fprintf(socket_fp, "HTTP/1.1 200 OK\n");
-    //fprintf(socket_fp, "Date: %s\n", asctime(time_inf));
-    fprintf(stderr, "Date: %s\n", asctime(time_inf));
-    strftime(d, 1024, "%Y年%m月%d日 %H時%M分%S秒", time_inf);
+    strftime(d, 1024, "%a, %b %d %H:%M:%S %G", time_inf);
+    fprintf(stderr, "Date: %s\n", d);
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
@@ -62,9 +61,8 @@ void response_header_301(FILE *socket_fp, int index, char *path)
     time_inf = gmtime(&timep);
 
     fprintf(socket_fp, "HTTP/1.1 301 Moved Permanently\n");
-    //fprintf(socket_fp, "Date: %s\n", asctime(time_inf));
-    fprintf(stderr, "Date: %s\n", asctime(time_inf));
-    strftime(d, 1024, "%Y年%m月%d日 %H時%M分%S秒", time_inf);
+    strftime(d, 1024, "%a, %b %d %H:%M:%S %G", time_inf);
+    fprintf(stderr, "Date: %s\n", d);
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Location: %s\n", path);
@@ -84,9 +82,8 @@ void response_header_404(FILE *socket_fp, int index)
     time_inf = gmtime(&timep);
 
     fprintf(socket_fp, "HTTP/1.1 404 OK\n");
-    //fprintf(socket_fp, "Date: %s\n", asctime(time_inf));
-    fprintf(stderr, "Date: %s\n", asctime(time_inf));
-    strftime(d, 1024, "%Y年%m月%d日 %H時%M分%S秒", time_inf);
+    strftime(d, 1024, "%a, %b %d %H:%M:%S %G", time_inf);
+    fprintf(stderr, "Date: %s\n", d);
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
