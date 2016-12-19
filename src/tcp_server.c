@@ -91,7 +91,6 @@ void response_header_404(FILE *socket_fp, int index)
     fprintf(stderr, "Content-type: %s\n", table[index][1]);
     fprintf(socket_fp, "\n");
 }
-//void thread(FILE *socket_fp, int fd)
 void thread(void *p)
 {
     FILE *socket_fp;
@@ -164,6 +163,7 @@ void thread(void *p)
     }
 
     socket_fp = fdopen(fd, "w");
+    file_in_fp = fopen(file_name, "r");
 
     if(file_in_fp == NULL) {
         fprintf(stderr, "---- 2 [404 file notfound] ----\n");
@@ -204,8 +204,6 @@ int main(int argc, char **argv)
 {
     int sock;
     struct sockaddr_in addr;
-    int fd;
-    FILE *socket_fp;
     int ch;
     pthread_t pthread;
     thread_arg arg;
@@ -220,14 +218,8 @@ int main(int argc, char **argv)
     ch = listen(sock, 6);
 
     while(1) {
-        fd = accept(sock, NULL, NULL);
-
-        socket_fp = fdopen(fd, "r+");
-
-        arg.socket_fp = socket_fp;
-        arg.fd = fd;
-        //thread(socket_fp, fd);
-        //thread(&arg);
+        arg.fd        = accept(sock, NULL, NULL);
+        arg.socket_fp = fdopen(arg.fd, "r+");
         pthread_create( &pthread, NULL, (void *)&thread, &arg);
     }
 
