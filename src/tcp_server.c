@@ -13,12 +13,17 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+enum {
+    PORT_NUMBER = 8001,
+    BUF_SIZE    = 1024
+};
+
 typedef struct {
     FILE *socket_fp;
     int fd;
 } thread_arg;
 
-char *table[10][2] = {
+char *table[][2] = {
     {"html", "text/html"},
     {"htm",  "text/html"},
     {"txt",  "text/plain"},
@@ -34,15 +39,14 @@ char *table[10][2] = {
 void response_header_200(FILE *socket_fp, int index)
 {
     time_t timep;
-    struct tm   *time_inf;
-    char d[1024];
+    struct tm *time_inf;
+    char d[BUF_SIZE];
 
     timep = time(NULL);
     time_inf = gmtime(&timep);
+    strftime(d, BUF_SIZE, "%a, %b %d %H:%M:%S %G", time_inf);
 
     fprintf(socket_fp, "HTTP/1.1 200 OK\n");
-    strftime(d, 1024, "%a, %b %d %H:%M:%S %G", time_inf);
-    fprintf(stderr, "Date: %s\n", d);
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
@@ -55,14 +59,13 @@ void response_header_301(FILE *socket_fp, int index, char *path)
 {
     time_t timep;
     struct tm   *time_inf;
-    char d[1024];
+    char d[BUF_SIZE];
 
     timep = time(NULL);
     time_inf = gmtime(&timep);
+    strftime(d, BUF_SIZE, "%a, %b %d %H:%M:%S %G", time_inf);
 
     fprintf(socket_fp, "HTTP/1.1 301 Moved Permanently\n");
-    strftime(d, 1024, "%a, %b %d %H:%M:%S %G", time_inf);
-    fprintf(stderr, "Date: %s\n", d);
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Location: %s\n", path);
@@ -76,14 +79,13 @@ void response_header_404(FILE *socket_fp, int index)
 {
     time_t timep;
     struct tm   *time_inf;
-    char d[1024];
+    char d[BUF_SIZE];
 
     timep = time(NULL);
     time_inf = gmtime(&timep);
+    strftime(d, BUF_SIZE, "%a, %b %d %H:%M:%S %G", time_inf);
 
     fprintf(socket_fp, "HTTP/1.1 404 OK\n");
-    strftime(d, 1024, "%a, %b %d %H:%M:%S %G", time_inf);
-    fprintf(stderr, "Date: %s\n", d);
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
@@ -91,18 +93,19 @@ void response_header_404(FILE *socket_fp, int index)
     fprintf(stderr, "Content-type: %s\n", table[index][1]);
     fprintf(socket_fp, "\n");
 }
+
 void thread(void *p)
 {
     FILE *socket_fp;
     int fd;
-    char d[1024];
+    char d[BUF_SIZE];
     FILE *file_in_fp;
-    char line[1024];
-    char file_name[1024];
-    char file_name2[1024];
-    char real[1024];
-    char pathname[1024];
-    char location[1024];
+    char line[BUF_SIZE];
+    char file_name[BUF_SIZE];
+    char file_name2[BUF_SIZE];
+    char real[BUF_SIZE];
+    char pathname[BUF_SIZE];
+    char location[BUF_SIZE];
     char *ext;
     int index;
     struct stat st;
@@ -112,7 +115,7 @@ void thread(void *p)
     socket_fp = t->socket_fp;
     fd = t->fd;
 
-    while(fgets(line, 1024, socket_fp) != NULL) {
+    while(fgets(line, BUF_SIZE, socket_fp) != NULL) {
         if (strcmp(line, "\r\n") == 0 || strcmp(line, "\n") == 0) {
             break;
         }
@@ -124,12 +127,10 @@ void thread(void *p)
             strcpy(file_name2, file_name);
             ext = strtok(file_name2, ".");
             ext = strtok(NULL, ".");
-            fprintf(stderr, "[%s]\n", file_name);
-            fprintf(stderr, "[%s]\n", ext);
 
-            for(index = 0; index < 9; index++) {
+            for(index = 0; index < ((sizeof(table)/sizeof(table[0]))-1); index++) {
                 if(ext == NULL) {
-                    index = 9;
+                    index = sizeof(table)/sizeof(table[0]) - 1;
                     break;
                 }
                 if(strcmp(ext, table[index][0]) == 0) {
@@ -139,7 +140,7 @@ void thread(void *p)
         }
     }
 
-    getcwd(pathname, 1024);
+    getcwd(pathname, BUF_SIZE);
     fprintf(stderr, "path: %s\n", pathname);
 
     realpath(file_name, real);
@@ -164,34 +165,32 @@ void thread(void *p)
 
     socket_fp = fdopen(fd, "w");
     file_in_fp = fopen(file_name, "r");
+    fprintf(stderr, "file_name : %s\n", file_name);
 
     if(file_in_fp == NULL) {
         fprintf(stderr, "---- 2 [404 file notfound] ----\n");
-        fprintf(stderr, "file_name : %s\n", file_name);
         index = 0;
         response_header_404(socket_fp, index);
         file_in_fp = fopen("./404.html", "r");
-        while(fgets(line, 1024, file_in_fp) != NULL) {
+        while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
             fprintf(socket_fp, "%s", line);
         }
         fclose(file_in_fp);
     } if(strncmp(real, pathname, strlen(pathname)) != 0) {
         fprintf(stderr, "---- 3 [404 traversal] ----\n");
-        fprintf(stderr, "file_name : %s\n", file_name);
         index = 0;
         response_header_404(socket_fp, index);
         file_in_fp = fopen("./404.html", "r");
-        while(fgets(line, 1024, file_in_fp) != NULL) {
+        while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
             fprintf(socket_fp, "%s", line);
         }
         fprintf(socket_fp, "drectory\n");
         fclose(file_in_fp);
     } else {
         fprintf(stderr, "---- 4 [200 file found] ----\n");
-        fprintf(stderr, "file_name : %s\n", file_name);
         response_header_200(socket_fp, index);
         file_in_fp = fopen(file_name, "r");
-        while(fgets(line, 1024, file_in_fp) != NULL) {
+        while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
             fprintf(socket_fp, "%s", line);
         }
         fclose(file_in_fp);
@@ -210,7 +209,7 @@ int main(int argc, char **argv)
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(8001);
+    addr.sin_port = htons(PORT_NUMBER);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
