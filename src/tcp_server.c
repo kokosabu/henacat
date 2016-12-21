@@ -178,7 +178,7 @@ void thread(void *p)
             fprintf(socket_fp, "%s", line);
         }
         fclose(file_in_fp);
-    } if(strncmp(real, pathname, strlen(pathname)) != 0) {
+    } else if(strncmp(real, pathname, strlen(pathname)) != 0) {
         fprintf(stderr, "---- 3 [404 traversal] ----\n");
         index = 0;
         response_header_404(socket_fp, index);
