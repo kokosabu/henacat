@@ -14,8 +14,10 @@
 #include <sys/stat.h>
 
 enum {
-    PORT_NUMBER = 8001,
-    BUF_SIZE    = 1024
+    PORT_NUMBER  = 8001,
+    BUF_SIZE     = 1024,
+    EXT          = 0,
+    CONTENT_TYPE = 1
 };
 
 typedef struct {
@@ -50,8 +52,8 @@ void response_header_200(FILE *socket_fp, int index)
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
-    fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
-    fprintf(stderr, "Content-type: %s\n", table[index][1]);
+    fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
+    fprintf(stderr, "Content-type: %s\n", table[index][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
 }
 
@@ -70,8 +72,8 @@ void response_header_301(FILE *socket_fp, int index, char *path)
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Location: %s\n", path);
     fprintf(socket_fp, "Connection: close\n");
-    fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
-    fprintf(stderr, "Content-type: %s\n", table[index][1]);
+    fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
+    fprintf(stderr, "Content-type: %s\n", table[index][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
 }
 
@@ -89,8 +91,8 @@ void response_header_404(FILE *socket_fp, int index)
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
-    fprintf(socket_fp, "Content-type: %s\n", table[index][1]);
-    fprintf(stderr, "Content-type: %s\n", table[index][1]);
+    fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
+    fprintf(stderr, "Content-type: %s\n", table[index][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
 }
 
@@ -133,7 +135,7 @@ void thread(void *p)
                     index = sizeof(table)/sizeof(table[0]) - 1;
                     break;
                 }
-                if(strcmp(ext, table[index][0]) == 0) {
+                if(strcmp(ext, table[index][EXT]) == 0) {
                     break;
                 }
             }
