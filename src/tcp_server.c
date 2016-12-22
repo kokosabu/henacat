@@ -38,15 +38,21 @@ char *table[][2] = {
     {NULL,   "text/plain"}
 };
 
-void response_header_200(FILE *socket_fp, int index)
+void make_date(char d[], int buf_size)
 {
     time_t timep;
     struct tm *time_inf;
-    char d[BUF_SIZE];
 
     timep = time(NULL);
     time_inf = gmtime(&timep);
-    strftime(d, BUF_SIZE, "%a, %b %d %H:%M:%S %G", time_inf);
+    strftime(d, buf_size, "%a, %b %d %H:%M:%S %G", time_inf);
+}
+
+void response_header_200(FILE *socket_fp, int index)
+{
+    char d[BUF_SIZE];
+
+    make_date(d, BUF_SIZE);
 
     fprintf(socket_fp, "HTTP/1.1 200 OK\n");
     fprintf(socket_fp, "Date: %s\n", d);
@@ -59,13 +65,9 @@ void response_header_200(FILE *socket_fp, int index)
 
 void response_header_301(FILE *socket_fp, int index, char *path)
 {
-    time_t timep;
-    struct tm   *time_inf;
     char d[BUF_SIZE];
 
-    timep = time(NULL);
-    time_inf = gmtime(&timep);
-    strftime(d, BUF_SIZE, "%a, %b %d %H:%M:%S %G", time_inf);
+    make_date(d, BUF_SIZE);
 
     fprintf(socket_fp, "HTTP/1.1 301 Moved Permanently\n");
     fprintf(socket_fp, "Date: %s\n", d);
@@ -79,13 +81,9 @@ void response_header_301(FILE *socket_fp, int index, char *path)
 
 void response_header_404(FILE *socket_fp, int index)
 {
-    time_t timep;
-    struct tm   *time_inf;
     char d[BUF_SIZE];
 
-    timep = time(NULL);
-    time_inf = gmtime(&timep);
-    strftime(d, BUF_SIZE, "%a, %b %d %H:%M:%S %G", time_inf);
+    make_date(d, BUF_SIZE);
 
     fprintf(socket_fp, "HTTP/1.1 404 OK\n");
     fprintf(socket_fp, "Date: %s\n", d);
