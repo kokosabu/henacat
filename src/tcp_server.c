@@ -59,7 +59,6 @@ void response_header_200(FILE *socket_fp, int index)
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
     fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
-    fprintf(stderr, "Content-type: %s\n", table[index][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
 }
 
@@ -75,7 +74,6 @@ void response_header_301(FILE *socket_fp, int index, char *path)
     fprintf(socket_fp, "Location: %s\n", path);
     fprintf(socket_fp, "Connection: close\n");
     fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
-    fprintf(stderr, "Content-type: %s\n", table[index][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
 }
 
@@ -90,15 +88,25 @@ void response_header_404(FILE *socket_fp, int index)
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
     fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
-    fprintf(stderr, "Content-type: %s\n", table[index][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
+}
+
+void response_body(FILE *socket_fp)
+{
+    FILE *file_in_fp;
+    char line[BUF_SIZE];
+
+    file_in_fp = fopen("./404.html", "r");
+    while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
+        fprintf(socket_fp, "%s", line);
+    }
+    fclose(file_in_fp);
 }
 
 void thread(void *p)
 {
     FILE *socket_fp;
     int fd;
-    char d[BUF_SIZE];
     FILE *file_in_fp;
     char line[BUF_SIZE];
     char file_name[BUF_SIZE];
@@ -111,9 +119,8 @@ void thread(void *p)
     struct stat st;
     int result;
 
-    thread_arg *t = (thread_arg *)p;
-    socket_fp = t->socket_fp;
-    fd = t->fd;
+    socket_fp = ((thread_arg *)p)->socket_fp;
+    fd        = ((thread_arg *)p)->fd;
 
     while(fgets(line, BUF_SIZE, socket_fp) != NULL) {
         if (strcmp(line, "\r\n") == 0 || strcmp(line, "\n") == 0) {
@@ -141,9 +148,8 @@ void thread(void *p)
     }
 
     getcwd(pathname, BUF_SIZE);
-    fprintf(stderr, "path: %s\n", pathname);
-
     realpath(file_name, real);
+    fprintf(stderr, "path: %s\n", pathname);
     fprintf(stderr, "real: %s\n", real);
 
     if(file_name[strlen(file_name)-1] == '/') {
@@ -171,21 +177,12 @@ void thread(void *p)
         fprintf(stderr, "---- 2 [404 file notfound] ----\n");
         index = 0;
         response_header_404(socket_fp, index);
-        file_in_fp = fopen("./404.html", "r");
-        while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
-            fprintf(socket_fp, "%s", line);
-        }
-        fclose(file_in_fp);
+        response_body(socket_fp);
     } else if(strncmp(real, pathname, strlen(pathname)) != 0) {
         fprintf(stderr, "---- 3 [404 traversal] ----\n");
         index = 0;
         response_header_404(socket_fp, index);
-        file_in_fp = fopen("./404.html", "r");
-        while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
-            fprintf(socket_fp, "%s", line);
-        }
-        fprintf(socket_fp, "drectory\n");
-        fclose(file_in_fp);
+        response_body(socket_fp);
     } else {
         fprintf(stderr, "---- 4 [200 file found] ----\n");
         response_header_200(socket_fp, index);
