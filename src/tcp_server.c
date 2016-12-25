@@ -91,12 +91,12 @@ void response_header_404(FILE *socket_fp, int index)
     fprintf(socket_fp, "\n");
 }
 
-void response_body(FILE *socket_fp)
+void response_body(FILE *socket_fp, char *file_name)
 {
     FILE *file_in_fp;
     char line[BUF_SIZE];
 
-    file_in_fp = fopen("./404.html", "r");
+    file_in_fp = fopen(file_name, "r");
     while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
         fprintf(socket_fp, "%s", line);
     }
@@ -177,20 +177,16 @@ void thread(void *p)
         fprintf(stderr, "---- 2 [404 file notfound] ----\n");
         index = 0;
         response_header_404(socket_fp, index);
-        response_body(socket_fp);
+        response_body(socket_fp, "./404.html");
     } else if(strncmp(real, pathname, strlen(pathname)) != 0) {
         fprintf(stderr, "---- 3 [404 traversal] ----\n");
         index = 0;
         response_header_404(socket_fp, index);
-        response_body(socket_fp);
+        response_body(socket_fp, "./404.html");
     } else {
         fprintf(stderr, "---- 4 [200 file found] ----\n");
         response_header_200(socket_fp, index);
-        file_in_fp = fopen(file_name, "r");
-        while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
-            fprintf(socket_fp, "%s", line);
-        }
-        fclose(file_in_fp);
+        response_body(socket_fp, file_name);
     }
 
     fclose(socket_fp);
