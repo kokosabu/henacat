@@ -158,8 +158,6 @@ void thread(void *p)
 
     getcwd(pathname, BUF_SIZE);
     realpath(file_name, real);
-    fprintf(stderr, "path: %s\n", pathname);
-    fprintf(stderr, "real: %s\n", real);
 
     if(file_name[strlen(file_name)-1] == '/') {
         index = 0;
@@ -167,33 +165,24 @@ void thread(void *p)
     } else {
         result = stat(real, &st);
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
-            fprintf(stderr, "---- 1 [301] ----\n");
-            index = 0;
             strcpy(location, "http://localhost:8001/");
             strcat(location, file_name);
             strcat(location, "/");
-            fprintf(stderr, "trav file_name : %s\n", location);
-            response_header_301(socket_fp, index, location);
+            response_header_301(socket_fp, 0, location);
             return;
         }
     }
 
     socket_fp = fdopen(fd, "w");
     file_in_fp = fopen(file_name, "r");
-    fprintf(stderr, "file_name : %s\n", file_name);
 
     if(file_in_fp == NULL) {
-        fprintf(stderr, "---- 2 [404 file notfound] ----\n");
-        index = 0;
-        response_header_404(socket_fp, index);
+        response_header_404(socket_fp, 0);
         response_body(socket_fp, "./404.html");
     } else if(strncmp(real, pathname, strlen(pathname)) != 0) {
-        fprintf(stderr, "---- 3 [404 traversal] ----\n");
-        index = 0;
-        response_header_404(socket_fp, index);
+        response_header_404(socket_fp, 0);
         response_body(socket_fp, "./404.html");
     } else {
-        fprintf(stderr, "---- 4 [200 file found] ----\n");
         response_header_200(socket_fp, index);
         response_body(socket_fp, file_name);
     }
@@ -215,7 +204,7 @@ int main(int argc, char **argv)
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    ch = bind(sock, (struct sockaddr*)&addr, sizeof(addr));
+    (void)bind(sock, (struct sockaddr*)&addr, sizeof(addr));
     ch = listen(sock, 6);
 
     while(1) {
