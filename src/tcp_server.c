@@ -38,6 +38,41 @@ char *table[][2] = {
     {NULL,   "text/plain"}
 };
 
+int request(FILE *socket_fp, char *file_name)
+{
+    char line[BUF_SIZE];
+    char file_name2[BUF_SIZE];
+    char *ext;
+    int index;
+
+    while(fgets(line, BUF_SIZE, socket_fp) != NULL) {
+        if (strcmp(line, "\r\n") == 0 || strcmp(line, "\n") == 0) {
+            break;
+        }
+        if (strncmp(line, "GET", 3) == 0) {
+            fprintf(stderr, "[%s]", line);
+            strtok(line, " ");
+            strcpy(file_name, ".");
+            strcat(file_name, strtok(NULL, " "));
+            strcpy(file_name2, file_name);
+            ext = strtok(file_name2, ".");
+            ext = strtok(NULL, ".");
+
+            for(index = 0; index < ((sizeof(table)/sizeof(table[0]))-1); index++) {
+                if(ext == NULL) {
+                    index = sizeof(table)/sizeof(table[0]) - 1;
+                    break;
+                }
+                if(strcmp(ext, table[index][EXT]) == 0) {
+                    break;
+                }
+            }
+        }
+    }
+
+    return index;
+}
+
 void make_date(char d[], int buf_size)
 {
     time_t timep;
@@ -108,13 +143,10 @@ void thread(void *p)
     FILE *socket_fp;
     int fd;
     FILE *file_in_fp;
-    char line[BUF_SIZE];
     char file_name[BUF_SIZE];
-    char file_name2[BUF_SIZE];
     char real[BUF_SIZE];
     char pathname[BUF_SIZE];
     char location[BUF_SIZE];
-    char *ext;
     int index;
     struct stat st;
     int result;
@@ -122,30 +154,7 @@ void thread(void *p)
     socket_fp = ((thread_arg *)p)->socket_fp;
     fd        = ((thread_arg *)p)->fd;
 
-    while(fgets(line, BUF_SIZE, socket_fp) != NULL) {
-        if (strcmp(line, "\r\n") == 0 || strcmp(line, "\n") == 0) {
-            break;
-        }
-        if (strncmp(line, "GET", 3) == 0) {
-            fprintf(stderr, "[%s]", line);
-            strtok(line, " ");
-            strcpy(file_name, ".");
-            strcat(file_name, strtok(NULL, " "));
-            strcpy(file_name2, file_name);
-            ext = strtok(file_name2, ".");
-            ext = strtok(NULL, ".");
-
-            for(index = 0; index < ((sizeof(table)/sizeof(table[0]))-1); index++) {
-                if(ext == NULL) {
-                    index = sizeof(table)/sizeof(table[0]) - 1;
-                    break;
-                }
-                if(strcmp(ext, table[index][EXT]) == 0) {
-                    break;
-                }
-            }
-        }
-    }
+    index = request(socket_fp, file_name);
 
     getcwd(pathname, BUF_SIZE);
     realpath(file_name, real);
