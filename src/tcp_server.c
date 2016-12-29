@@ -54,9 +54,7 @@ int request(FILE *socket_fp, char *file_name)
         if (strncmp(line, "GET", 3) == 0) {
             fprintf(stderr, "[%s]", line);
             strtok(line, " ");
-            strcpy(file_name, "./");
-            strcat(file_name, base);
-            strcat(file_name, strtok(NULL, " "));
+            sprintf(file_name, "./%s%s", base, strtok(NULL, " "));
             strcpy(file_name2, file_name);
             ext = strtok(file_name2, ".");
             ext = strtok(NULL, ".");
@@ -164,14 +162,11 @@ void thread(void *p)
 
     if(file_name[strlen(file_name)-1] == '/') {
         index = 0;
-        strcat(file_name, base);
-        strcat(file_name, "/index.html");
+        sprintf(file_name, "%s/index.html", base);
     } else {
         result = stat(real, &st);
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
-            strcpy(location, "http://localhost:8001/");
-            strcat(location, file_name);
-            strcat(location, "/");
+            sprintf(location, "http://localhost:8001/%s/", file_name);
             response_header_301(socket_fp, 0, location);
             return;
         }
