@@ -193,18 +193,17 @@ int main(int argc, char **argv)
 {
     int sock;
     struct sockaddr_in addr;
-    int ch;
     pthread_t pthread;
     thread_arg arg;
 
     memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT_NUMBER);
+    addr.sin_family      = AF_INET;
+    addr.sin_port        = htons(PORT_NUMBER);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     (void)bind(sock, (struct sockaddr*)&addr, sizeof(addr));
-    ch = listen(sock, 6);
+    (void)listen(sock, 6);
 
     while(1) {
         arg.fd        = accept(sock, NULL, NULL);
