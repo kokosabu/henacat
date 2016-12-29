@@ -20,6 +20,8 @@ enum {
     CONTENT_TYPE = 1
 };
 
+static const char *base = "htdocs";
+
 typedef struct {
     FILE *socket_fp;
     int fd;
@@ -52,7 +54,8 @@ int request(FILE *socket_fp, char *file_name)
         if (strncmp(line, "GET", 3) == 0) {
             fprintf(stderr, "[%s]", line);
             strtok(line, " ");
-            strcpy(file_name, ".");
+            strcpy(file_name, "./");
+            strcat(file_name, base);
             strcat(file_name, strtok(NULL, " "));
             strcpy(file_name2, file_name);
             ext = strtok(file_name2, ".");
@@ -161,7 +164,8 @@ void thread(void *p)
 
     if(file_name[strlen(file_name)-1] == '/') {
         index = 0;
-        strcat(file_name, "index.html");
+        strcat(file_name, base);
+        strcat(file_name, "/index.html");
     } else {
         result = stat(real, &st);
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
@@ -178,10 +182,10 @@ void thread(void *p)
 
     if(file_in_fp == NULL) {
         response_header_404(socket_fp, 0);
-        response_body(socket_fp, "./404.html");
+        response_body(socket_fp, "./htdocs/404.html");
     } else if(strncmp(real, pathname, strlen(pathname)) != 0) {
         response_header_404(socket_fp, 0);
-        response_body(socket_fp, "./404.html");
+        response_body(socket_fp, "./htdocs/404.html");
     } else {
         response_header_200(socket_fp, index);
         response_body(socket_fp, file_name);
