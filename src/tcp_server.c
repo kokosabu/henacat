@@ -166,7 +166,7 @@ void thread(void *p)
     } else {
         result = stat(real, &st);
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
-            sprintf(location, "http://localhost:8001/%s/", file_name);
+            sprintf(location, "http://localhost:%d/%s/", PORT_NUMBER, file_name);
             response_header_301(socket_fp, 0, location);
             return;
         }
