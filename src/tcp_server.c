@@ -127,16 +127,13 @@ void response_header_404(FILE *socket_fp, int index)
     fprintf(socket_fp, "\n");
 }
 
-void response_body(FILE *socket_fp, char *file_name)
+void response_body(FILE *socket_fp, FILE *file_in_fp)
 {
-    FILE *file_in_fp;
     char line[BUF_SIZE];
 
-    file_in_fp = fopen(file_name, "r");
     while(fgets(line, BUF_SIZE, file_in_fp) != NULL) {
         fprintf(socket_fp, "%s", line);
     }
-    fclose(file_in_fp);
 }
 
 void thread(void *p)
@@ -150,7 +147,6 @@ void thread(void *p)
     char location[BUF_SIZE];
     int index;
     struct stat st;
-    int result;
 
     socket_fp = ((thread_arg *)p)->socket_fp;
     fd        = ((thread_arg *)p)->fd;
@@ -164,7 +160,7 @@ void thread(void *p)
         index = 0;
         sprintf(file_name, "%s/index.html", base);
     } else {
-        result = stat(real, &st);
+        (void)stat(real, &st);
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
             sprintf(location, "http://localhost:%d/%s/", PORT_NUMBER, file_name);
             response_header_301(socket_fp, 0, location);
@@ -175,15 +171,14 @@ void thread(void *p)
     socket_fp = fdopen(fd, "w");
     file_in_fp = fopen(file_name, "r");
 
-    if(file_in_fp == NULL) {
+    if(    (file_in_fp == NULL)
+        || (strncmp(real, pathname, strlen(pathname)) != 0)) {
         response_header_404(socket_fp, 0);
-        response_body(socket_fp, "./htdocs/404.html");
-    } else if(strncmp(real, pathname, strlen(pathname)) != 0) {
-        response_header_404(socket_fp, 0);
-        response_body(socket_fp, "./htdocs/404.html");
+        file_in_fp = fopen("./htdocs/404.html", "r");
+        response_body(socket_fp, file_in_fp);
     } else {
         response_header_200(socket_fp, index);
-        response_body(socket_fp, file_name);
+        response_body(socket_fp, file_in_fp);
     }
 
     fclose(socket_fp);
