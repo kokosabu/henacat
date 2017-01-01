@@ -20,6 +20,8 @@ enum {
     CONTENT_TYPE = 1
 };
 
+#define TABLE_SIZE (sizeof(table)/sizeof(table[0]))
+
 static const char *base = "htdocs";
 
 typedef struct {
@@ -89,11 +91,10 @@ int request(FILE *socket_fp, char *file_name)
             sprintf(file_name, "./%s%s", base, file);
             ext = search_ext(file_name);
 
-            for(index = 0; index < ((sizeof(table)/sizeof(table[0]))-1); index++) {
-                if(ext == NULL) {
-                    index = sizeof(table)/sizeof(table[0]) - 1;
-                    break;
-                }
+            if(ext == NULL) {
+                return TABLE_SIZE - 1;
+            }
+            for(index = 0; index < (TABLE_SIZE-1); index++) {
                 if(strcmp(ext, table[index][EXT]) == 0) {
                     break;
                 }
@@ -182,6 +183,7 @@ void thread(void *p)
     fd        = ((thread_arg *)p)->fd;
 
     index = request(socket_fp, file_name);
+    socket_fp = fdopen(fd, "w");
 
     getcwd(pathname, BUF_SIZE);
     realpath(file_name, real);
@@ -198,7 +200,6 @@ void thread(void *p)
         }
     }
 
-    socket_fp = fdopen(fd, "w");
     file_in_fp = fopen(file_name, "r");
 
     if(    (file_in_fp == NULL)
@@ -211,6 +212,7 @@ void thread(void *p)
         response_body(socket_fp, file_in_fp);
     }
 
+    fclose(file_in_fp);
     fclose(socket_fp);
 }
 
@@ -230,9 +232,11 @@ int main(int argc, char **argv)
     (void)bind(sock, (struct sockaddr*)&addr, sizeof(addr));
     (void)listen(sock, 6);
 
+    fprintf(stderr, "listen\n");
     while(1) {
         arg.fd        = accept(sock, NULL, NULL);
         arg.socket_fp = fdopen(arg.fd, "r+");
+        fprintf(stderr, "accept\n");
         pthread_create( &pthread, NULL, (void *)&thread, &arg);
     }
 
