@@ -40,10 +40,29 @@ char *table[][2] = {
     {NULL,   "text/plain"}
 };
 
+char *search_ext(char *file_name)
+{
+    int len;
+    char *ext;
+
+    ext = file_name + strlen(file_name) - 1;
+    while(ext != file_name) {
+        if(*ext == '/') {
+            ext = NULL;
+            break;
+        } else if(*ext == '.') {
+            ext++;
+            break;
+        }
+        ext--;
+    }
+
+    return ext;
+}
+
 int request(FILE *socket_fp, char *file_name)
 {
     char line[BUF_SIZE];
-    char file_name2[BUF_SIZE];
     char *ext;
     int index;
 
@@ -55,9 +74,7 @@ int request(FILE *socket_fp, char *file_name)
             fprintf(stderr, "[%s]", line);
             strtok(line, " ");
             sprintf(file_name, "./%s%s", base, strtok(NULL, " "));
-            strcpy(file_name2, file_name);
-            ext = strtok(file_name2, ".");
-            ext = strtok(NULL, ".");
+            ext = search_ext(file_name);
 
             for(index = 0; index < ((sizeof(table)/sizeof(table[0]))-1); index++) {
                 if(ext == NULL) {
