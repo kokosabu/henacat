@@ -129,7 +129,7 @@ void response_header_200(FILE *socket_fp, int index)
     fprintf(socket_fp, "\n");
 }
 
-void response_header_301(FILE *socket_fp, int index, char *path)
+void response_header_301(FILE *socket_fp, char *path)
 {
     char d[BUF_SIZE];
 
@@ -140,11 +140,11 @@ void response_header_301(FILE *socket_fp, int index, char *path)
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Location: %s\n", path);
     fprintf(socket_fp, "Connection: close\n");
-    fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
+    fprintf(socket_fp, "Content-type: %s\n", table[0][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
 }
 
-void response_header_404(FILE *socket_fp, int index)
+void response_header_404(FILE *socket_fp)
 {
     char d[BUF_SIZE];
 
@@ -154,7 +154,7 @@ void response_header_404(FILE *socket_fp, int index)
     fprintf(socket_fp, "Date: %s\n", d);
     fprintf(socket_fp, "Server: Modoki/0.1\n");
     fprintf(socket_fp, "Connection: close\n");
-    fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
+    fprintf(socket_fp, "Content-type: %s\n", table[0][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
 }
 
@@ -195,7 +195,7 @@ void thread(void *p)
         (void)stat(real, &st);
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
             sprintf(location, "http://localhost:%d/%s/", PORT_NUMBER, file_name);
-            response_header_301(socket_fp, 0, location);
+            response_header_301(socket_fp, location);
             return;
         }
     }
@@ -204,7 +204,7 @@ void thread(void *p)
 
     if(    (file_in_fp == NULL)
         || (strncmp(real, pathname, strlen(pathname)) != 0)) {
-        response_header_404(socket_fp, 0);
+        response_header_404(socket_fp);
         file_in_fp = fopen("./htdocs/404.html", "r");
         response_body(socket_fp, file_in_fp);
     } else {
