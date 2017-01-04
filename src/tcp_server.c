@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/uio.h>
 #include <time.h>
+#include <errno.h>
 
 #include <pthread.h>
 #include <unistd.h>
@@ -229,8 +230,14 @@ int main(int argc, char **argv)
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
-    (void)bind(sock, (struct sockaddr*)&addr, sizeof(addr));
-    (void)listen(sock, 6);
+    if(bind(sock, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
+        fprintf(stderr, "%s\n", strerror(errno));
+        return -1;
+    }
+    if(listen(sock, 6) == -1) {
+        fprintf(stderr, "%s\n", strerror(errno));
+        return -1;
+    }
 
     fprintf(stderr, "listen\n");
     while(1) {
