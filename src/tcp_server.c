@@ -241,8 +241,16 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "listen\n");
     while(1) {
-        arg.fd        = accept(sock, NULL, NULL);
+        arg.fd = accept(sock, NULL, NULL);
+        if(arg.fd == -1) {
+            fprintf(stderr, "%s\n", strerror(errno));
+            continue;
+        }
         arg.socket_fp = fdopen(arg.fd, "r+");
+        if(arg.socket_fp == NULL) {
+            fprintf(stderr, "%s\n", strerror(errno));
+            continue;
+        }
         fprintf(stderr, "accept\n");
         pthread_create( &pthread, NULL, (void *)&thread, &arg);
     }
