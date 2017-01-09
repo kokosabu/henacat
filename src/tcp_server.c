@@ -56,6 +56,42 @@ void get_filename(char *line, char *file_name)
     *file_name = '\0';
 }
 
+unsigned char hex2int(char b1, char b2)
+{
+    int digit;
+
+    if(b1 >= 'A') {
+        digit = (b1 & 0xDF) - 'A' + 10; /* 小文字を大文字に変換 */
+    } else {
+        digit = (b1 - '0');
+    }
+    digit <<= 4;
+    if(b2 >= 'A') {
+        digit |= (b2 & 0xDF) - 'A' + 10;
+    } else {
+        digit |= (b2 - '0');
+    }
+
+    return digit;
+}
+
+void decode(char *dest, char *src, char *enc)
+{
+    int dest_index;
+    int i;
+    
+    dest_index = 0;
+    for(i = 0; i < strlen(src); i++) {
+        if(src[i] == '%') {
+            dest[dest_index] = hex2int(src[i+1], src[i+2]);
+            i += 2;
+        } else {
+            dest[dest_index] = src[i];
+        }
+        dest_index++;
+    }
+}
+
 char *search_ext(char *file_name)
 {
     int len;
@@ -80,6 +116,7 @@ int request(FILE *socket_fp, char *file_name)
 {
     char line[BUF_SIZE];
     char file[BUF_SIZE];
+    char encfile[BUF_SIZE];
     char *ext;
     int index;
 
@@ -89,8 +126,10 @@ int request(FILE *socket_fp, char *file_name)
         }
         if (strncmp(line, "GET", 3) == 0) {
             get_filename(line, file);
-            sprintf(file_name, "./%s%s", base, file);
+            decode(encfile, file, "UTF-8");
+            sprintf(file_name, "./%s%s", base, encfile);
             ext = search_ext(file_name);
+            fprintf(stderr, "[%s][%s]\n", file_name, ext);
 
             if(ext == NULL) {
                 return TABLE_SIZE - 1;
