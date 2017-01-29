@@ -79,7 +79,7 @@ void decode(char *dest, char *src, char *enc)
 {
     int dest_index;
     int i;
-    
+   
     dest_index = 0;
     for(i = 0; i < strlen(src); i++) {
         if(src[i] == '%') {
@@ -129,7 +129,6 @@ int request(FILE *socket_fp, char *file_name)
             decode(encfile, file, "UTF-8");
             sprintf(file_name, "./%s%s", base, encfile);
             ext = search_ext(file_name);
-            fprintf(stderr, "[%s][%s]\n", file_name, ext);
 
             if(ext == NULL) {
                 return TABLE_SIZE - 1;
