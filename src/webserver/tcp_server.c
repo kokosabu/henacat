@@ -23,7 +23,7 @@ enum {
 
 #define TABLE_SIZE (sizeof(table)/sizeof(table[0]))
 
-static const char *base = "htdocs";
+static const char *document_root = "htdocs";
 static const char *server_name = "Henacat";
 static const char *server_version = "0.0";
 
@@ -129,7 +129,7 @@ int request(FILE *socket_fp, char *file_name)
         if (strncmp(line, "GET", 3) == 0) {
             get_filename(line, file);
             decode(encfile, file, "UTF-8");
-            sprintf(file_name, "./%s%s", base, encfile);
+            sprintf(file_name, "./%s%s", document_root, encfile);
             ext = search_ext(file_name);
 
             if(ext == NULL) {
@@ -231,7 +231,7 @@ void thread(void *p)
 
     if(file_name[strlen(file_name)-1] == '/') {
         index = 0;
-        sprintf(file_name, "%s/index.html", base);
+        sprintf(file_name, "%s/index.html", document_root);
     } else {
         (void)stat(real, &st);
         if ((st.st_mode & S_IFMT) == S_IFDIR) {
