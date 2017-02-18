@@ -1,6 +1,6 @@
-modoki: tcp_server.o
-	$(CC) -Wall -o modoki tcp_server.o
+henacat: tcp_server.o
+	$(CC) -Wall -o ./henacat ./webserver/tcp_server.o
 
 clean:
-	rm -f tcp_server.o
-	rm -f modoki
+	rm -f ./webserver/tcp_server.o
+	rm -f ./henacat

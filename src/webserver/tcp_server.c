@@ -24,6 +24,8 @@ enum {
 #define TABLE_SIZE (sizeof(table)/sizeof(table[0]))
 
 static const char *base = "htdocs";
+static const char *server_name = "Henacat";
+static const char *server_version = "0.0";
 
 typedef struct {
     FILE *socket_fp;
@@ -162,7 +164,7 @@ void response_header_200(FILE *socket_fp, int index)
 
     fprintf(socket_fp, "HTTP/1.1 200 OK\n");
     fprintf(socket_fp, "Date: %s\n", d);
-    fprintf(socket_fp, "Server: Modoki/0.1\n");
+    fprintf(socket_fp, "Server: %s/%s\n", server_name, server_version);
     fprintf(socket_fp, "Connection: close\n");
     fprintf(socket_fp, "Content-type: %s\n", table[index][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
@@ -176,7 +178,7 @@ void response_header_301(FILE *socket_fp, char *path)
 
     fprintf(socket_fp, "HTTP/1.1 301 Moved Permanently\n");
     fprintf(socket_fp, "Date: %s\n", d);
-    fprintf(socket_fp, "Server: Modoki/0.1\n");
+    fprintf(socket_fp, "Server: %s/%s\n", server_name, server_version);
     fprintf(socket_fp, "Location: %s\n", path);
     fprintf(socket_fp, "Connection: close\n");
     fprintf(socket_fp, "Content-type: %s\n", table[0][CONTENT_TYPE]);
@@ -191,7 +193,7 @@ void response_header_404(FILE *socket_fp)
 
     fprintf(socket_fp, "HTTP/1.1 404 OK\n");
     fprintf(socket_fp, "Date: %s\n", d);
-    fprintf(socket_fp, "Server: Modoki/0.1\n");
+    fprintf(socket_fp, "Server: %s/%s\n", server_name, server_version);
     fprintf(socket_fp, "Connection: close\n");
     fprintf(socket_fp, "Content-type: %s\n", table[0][CONTENT_TYPE]);
     fprintf(socket_fp, "\n");
@@ -266,6 +268,10 @@ int main(int argc, char **argv)
     addr.sin_family      = AF_INET;
     addr.sin_port        = htons(PORT_NUMBER);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    // WebApplication app = WebApplication.createInstance("testbbs");
+    // app.addServlet("/ShowBBS", "ShowBBS");
+    // app.addServlet("/PostBBS", "PostBBS");
 
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if(bind(sock, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
