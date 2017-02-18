@@ -1,4 +1,4 @@
-henacat: tcp_server.o
+henacat: ./webserver/tcp_server.o
 	$(CC) -Wall -o ./henacat ./webserver/tcp_server.o
 
 clean:
