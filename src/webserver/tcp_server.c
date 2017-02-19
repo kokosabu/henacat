@@ -18,7 +18,9 @@ enum {
     PORT_NUMBER  = 8001,
     BUF_SIZE     = 1024,
     EXT          = 0,
-    CONTENT_TYPE = 1
+    CONTENT_TYPE = 1,
+    METHOD_GET   = 0,
+    METHOD_POST  = 1,
 };
 
 #define TABLE_SIZE (sizeof(table)/sizeof(table[0]))
@@ -120,22 +122,37 @@ int request(FILE *socket_fp, char *file_name)
     char line[BUF_SIZE];
     char file[BUF_SIZE];
     char encfile[BUF_SIZE];
+    char *request_line;
     char *ext;
     int index;
+    int method;
 
+    request_line = NULL;
     while(fgets(line, BUF_SIZE, socket_fp) != NULL) {
         if (strcmp(line, "\r\n") == 0 || strcmp(line, "\n") == 0) {
             break;
         }
         if (strncmp(line, "GET", 3) == 0) {
-            get_filename(line, file);
-            decode(encfile, file, "UTF-8");
-            sprintf(file_name, "./%s%s", document_root, encfile);
-            ext = search_ext(file_name);
+            method = METHOD_GET;
+            request_line = line;
+        } else if(strncmp(line, "POST", 4) == 0) {
+            method = METHOD_POST;
+            request_line = line;
+        } else {
+            // addRequestHeader(requestHeader, line);
+        }
+        if(request_line == NULL) {
+            return TABLE_SIZE-1;
+        }
 
-            if(ext == NULL) {
-                return TABLE_SIZE - 1;
-            }
+        get_filename(request_line, file);
+        decode(encfile, file, "UTF-8");
+        sprintf(file_name, "./%s%s", document_root, encfile);
+        ext = search_ext(file_name);
+
+        if(ext == NULL) {
+            index = TABLE_SIZE - 1;
+        } else {
             for(index = 0; index < (TABLE_SIZE-1); index++) {
                 if(strcmp(ext, table[index][EXT]) == 0) {
                     break;
@@ -209,6 +226,7 @@ void response_body(FILE *socket_fp, FILE *file_in_fp)
     }
 }
 
+/* ServerThread.run() */
 void thread(void *p)
 {
     FILE *socket_fp;
