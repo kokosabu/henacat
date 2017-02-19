@@ -24,6 +24,7 @@ enum {
 #define TABLE_SIZE (sizeof(table)/sizeof(table[0]))
 
 static const char *document_root = "htdocs";
+static const char *error_document = "error_document";
 static const char *server_name = "Henacat";
 static const char *server_version = "0.0";
 
@@ -246,7 +247,8 @@ void thread(void *p)
     if(    (file_in_fp == NULL)
         || (strncmp(real, pathname, strlen(pathname)) != 0)) {
         response_header_404(socket_fp);
-        file_in_fp = fopen("./htdocs/404.html", "r");
+        sprintf(file_name, "./%s/404.html", error_document);
+        file_in_fp = fopen(file_name, "r");
         response_body(socket_fp, file_in_fp);
     } else {
         response_header_200(socket_fp, index);
