@@ -317,6 +317,7 @@ int main(int argc, char **argv)
         }
         fprintf(stderr, "accept\n");
         pthread_create( &pthread, NULL, (void *)&thread, &arg);
+        fprintf(stderr, "thread create\n");
     }
 
     return 0;
