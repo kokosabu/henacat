@@ -145,9 +145,33 @@ int request(FILE *socket_fp, char *file_name)
             return TABLE_SIZE-1;
         }
 
+        // String reqUri = MyURLDecoder.decode(requestLine.split(" ")[1], "UTF-8");
+        // Stirng[] pathAndQuery = reqUri.split("\\?");
+        // String path = pathAndQuery[0];
+        // Stirng query = null;
+        // if (pathAndQuery.length > 1) {
+        //     query = pathAndQuery[1];
+        // }
+
+        // String appDir = path.substring(1).split("/")[0];
+        // WebApplication webApp = WebApplication.searchWebApplication(appDir);
+        // if (WebApp != null) {
+        //     ServletInfo servletInfo
+        //         = webApp.searchServlet(path.substring(appDir.length() + 1));
+        //     if (servletInfo != null) {
+        //         ServletService.doService(method, query, servletInfo,
+        //                 requestHeader, input, output);
+        //         return;
+        //     }
+        // }
+        // String ext = null;
+        // String[] tmp = reqUri.split("\\.");
+        // ext = tmp[tmp.length - 1];
+
         get_filename(request_line, file);
         decode(encfile, file, "UTF-8");
         sprintf(file_name, "./%s%s", document_root, encfile);
+
         ext = search_ext(file_name);
 
         if(ext == NULL) {
